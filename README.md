@@ -12,3 +12,5 @@ I asked him to create malware that could be embedded in an image, and he created
 
 
 <img width="511" height="410" alt="image" src="https://github.com/user-attachments/assets/70e92b7c-74b7-4aeb-acf4-7772cd75663b" />
+
+What's impressive is that it's a complete IDE, which means you can code as much as you want.
