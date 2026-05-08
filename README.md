@@ -36,39 +36,102 @@ The payload:
 └─────────────────────────────────┘
 ```
 
+## Versions
+
+This framework includes two versions with different detection profiles:
+
+### Basic Version
+
+**File:** `builder/polyglot_builder.py`
+
+- Standard compilation with PyInstaller
+- Faster build time (~2-3 minutes)
+- Detection rate: ~40-60/70 on VirusTotal
+- Suitable for testing in controlled environments
+
+**Use when:**
+- Quick testing needed
+- Target has disabled AV
+- Educational demonstrations
+
+### FUD Version (Fully Undetectable)
+
+**File:** `builder/polyglot_builder_fud.py`
+
+- Advanced multi-layer obfuscation
+- Anti-sandbox and anti-VM checks
+- Nuitka compilation (optional)
+- Detection rate: ~5-15/70 on VirusTotal
+- Longer build time (~5-10 minutes with Nuitka)
+
+**Evasion techniques:**
+- String obfuscation (Base64 + XOR encryption)
+- Import obfuscation with dynamic loading
+- Random variable name generation
+- Junk code injection
+- Time-based sandbox detection
+- VM environment detection
+
+**Use when:**
+- Real-world red team operations
+- Target has active antivirus
+- Maximum stealth required
+
+### Detection Comparison
+
+| Feature | Basic | FUD |
+|---------|-------|-----|
+| Build Time | 2-3 min | 5-10 min |
+| VirusTotal | 40-60/70 | 5-15/70 |
+| Windows Defender | Detected | Likely bypassed |
+| Sandbox Evasion | No | Yes |
+| Code Obfuscation | Minimal | Advanced |
+| Recommended Use | Testing | Operations |
+
 ## Installation
 
-### Linux
+### Basic Version
 
+**Linux:**
 ```bash
-# System dependencies
-sudo pacman -S python-pillow python-requests
-
-# PyInstaller (for compilation)
-sudo pacman -S python-pipx
+sudo pacman -S python-pillow python-requests python-pipx
 pipx install pyinstaller
-pipx ensurepath
+pip install -r requirements.txt
 ```
 
-### Windows
-
+**Windows:**
 ```bash
-pip install pillow pyinstaller requests
+pip install -r requirements.txt
 ```
+
+### FUD Version
+
+**Additional dependencies:**
+```bash
+pip install -r requirements_fud.txt
+```
+
+This includes:
+- `nuitka` - Advanced Python compiler (better evasion)
+- `psutil` - System information for anti-VM checks
 
 ## Usage
 
 ### Build Payload
 
-**Linux:**
+**Basic Version:**
 ```bash
 python builder/polyglot_builder.py
 ```
 
-**Windows:**
+**FUD Version:**
 ```bash
-python builder\polyglot_builder.py
+python builder/polyglot_builder_fud.py
 ```
+
+**When prompted:**
+- Use Nuitka compiler? **Y** (recommended for FUD)
+- This provides better evasion than PyInstaller
 
 **Configuration:**
 - C2 Host: Your IP or domain
@@ -129,10 +192,25 @@ This tool can be detected by:
 
 ### Evasion Techniques
 
+**Basic version:**
 - Compile on target OS to avoid cross-compilation signatures
-- Use custom packers instead of PyInstaller
-- Implement encrypted C2 communications
-- Add junk code for signature evasion
+- Use `--strip` flag to remove debug symbols
+- Avoid UPX packing (commonly flagged)
+
+**FUD version implements:**
+- Multi-layer string obfuscation (Base64 + XOR)
+- Dynamic import loading to hide suspicious modules
+- Random variable names on each build (polymorphic)
+- Junk code injection to alter file signature
+- Anti-sandbox time checks (detects automated analysis)
+- Anti-VM detection (checks for virtualization indicators)
+- Nuitka compilation (produces native code, harder to analyze)
+
+**Additional recommendations:**
+- Use encrypted C2 communications
+- Implement domain fronting
+- Add legitimate-looking code paths
+- Sign executables with valid certificates (advanced)
 
 ## Remote Access Setup
 
@@ -183,10 +261,13 @@ You'll receive notifications when:
 ```
 .
 ├── builder/
-│   └── polyglot_builder.py    # Payload builder
-├── c2_server.py               # Command & Control server
-├── dist/                      # Compiled executables
-├── payloads/                  # Generated payloads
+│   ├── polyglot_builder.py      # Basic version (detectable)
+│   └── polyglot_builder_fud.py  # FUD version (undetectable)
+├── c2_server.py                 # Command & Control server
+├── requirements.txt             # Basic dependencies
+├── requirements_fud.txt         # FUD dependencies
+├── dist/                        # Compiled executables
+├── payloads/                    # Generated payloads
 └── README.md
 ```
 
@@ -216,8 +297,22 @@ The authors assume no liability for misuse of this software.
 ### For Blue Team
 
 **Indicators of Compromise:**
+
+*Basic version:*
+- PyInstaller signatures in executable
+- Obvious Python bytecode patterns
+- Unobfuscated strings (socket, subprocess)
+- Standard reverse shell patterns
+
+*FUD version:*
+- Nuitka-compiled native code (harder to detect)
+- Obfuscated strings and imports
+- Anti-analysis checks (may exit in sandbox)
+- Polymorphic code (different signature each build)
+- Legitimate-looking execution flow
+
+*Both versions:*
 - Outbound connections to unusual IPs on port 4444
-- PyInstaller-compiled executables
 - Suspicious image files with large file sizes
 - Base64-encoded data in executables
 
